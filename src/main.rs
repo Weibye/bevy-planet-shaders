@@ -1,26 +1,28 @@
 use std::f32::consts::PI;
 
 use bevy::{
-    pbr::{CascadeShadowConfigBuilder, ExtendedMaterial, MaterialExtension},
+    pbr::{CascadeShadowConfigBuilder, ExtendedMaterial},
     prelude::*,
-    render::render_resource::*,
 };
+use celestial_shaders::{AtmosphereMaterial, CelestialShadersPlugin, PlanetMaterial};
 use rand::Rng;
+
+mod celestial_data;
+mod celestial_shaders;
 
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use bevy_shader_utils::ShaderUtilsPlugin;
 
-const PLANET_SHADER_ASSET_PATH: &str = "shaders/planet_shader.wgsl";
-const ATMOSPHERE_SHADER_ASSET_PATH: &str = "shaders/atmosphere_shader.wgsl";
+
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, (
-            MaterialPlugin::<ExtendedMaterial<StandardMaterial, PlanetMaterial>>::default()),
-            MaterialPlugin::<ExtendedMaterial<StandardMaterial, AtmosphereMaterial>>::default(),
-            ShaderUtilsPlugin,
-            PanOrbitCameraPlugin
-        ))
+        .add_plugins((DefaultPlugins, 
+            (
+                CelestialShadersPlugin,
+                ShaderUtilsPlugin,
+                PanOrbitCameraPlugin
+            )))
         .add_systems(Startup, setup)
         .add_systems(Update, (orbit_sun, create_new_seed))
         .run();
@@ -53,28 +55,28 @@ fn setup(
         }),
         ..default()
     });
-    // Create atmosphere
-    commands.spawn(MaterialMeshBundle {
-        mesh: meshes.add(Sphere {
-            radius: 200.0,
-        }.mesh()),
-        transform: Transform::from_xyz(0.0, 0.0, 0.0),
-        material: atmo_mats.add(ExtendedMaterial {
-            base: StandardMaterial {
-                base_color: Color::rgb(1.0, 1.0, 1.0),
-                alpha_mode: AlphaMode::Blend,
-                ..Default::default()
-            },
-            extension: AtmosphereMaterial {
-                // planet_radius: 180.0,
-                planet_radius: 180.0,
-                atmosphere_radius: 200.0,
-                atmosphere_color: Color::rgba(0.0, 0.0, 1.0, 0.1),
-                atmosphere_density: 0.1,
-            },
-        }),
-        ..default()
-    });
+    // // Create atmosphere
+    // commands.spawn(MaterialMeshBundle {
+    //     mesh: meshes.add(Sphere {
+    //         radius: 200.0,
+    //     }.mesh()),
+    //     transform: Transform::from_xyz(0.0, 0.0, 0.0),
+    //     material: atmo_mats.add(ExtendedMaterial {
+    //         base: StandardMaterial {
+    //             base_color: Color::rgb(1.0, 1.0, 1.0),
+    //             alpha_mode: AlphaMode::Blend,
+    //             ..Default::default()
+    //         },
+    //         extension: AtmosphereMaterial {
+    //             // planet_radius: 180.0,
+    //             planet_radius: 180.0,
+    //             atmosphere_radius: 200.0,
+    //             atmosphere_color: Color::rgba(0.0, 0.0, 1.0, 0.1),
+    //             atmosphere_density: 0.1,
+    //         },
+    //     }),
+    //     ..default()
+    // });
 
 
 
@@ -119,48 +121,7 @@ fn setup(
 }
 
 
-#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
-struct PlanetMaterial {
-    // planet_radius: f32,
-    
-    // #[uniform(101)]
-    #[uniform(100)]
-    planet_seed: u32,
-    // #[texture(1)]
-    // #[sampler(2)]
-    // color_texture: Option<Handle<Image>>,
-    // alpha_mode: AlphaMode,
-}
 
-/// The Material trait is very configurable, but comes with sensible defaults for all methods.
-/// You only need to implement functions for features that need non-default behavior. See the Material api docs for details!
-impl MaterialExtension for PlanetMaterial {
-    fn fragment_shader() -> ShaderRef {
-        PLANET_SHADER_ASSET_PATH.into()
-    }
-
-    fn deferred_fragment_shader() -> ShaderRef {
-        PLANET_SHADER_ASSET_PATH.into()
-    }
-}
-
-#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
-struct AtmosphereMaterial {
-    planet_radius: f32,
-    atmosphere_radius: f32,
-    atmosphere_color: Color,
-    atmosphere_density: f32,
-}
-
-impl MaterialExtension for AtmosphereMaterial {
-    fn fragment_shader() -> ShaderRef {
-        ATMOSPHERE_SHADER_ASSET_PATH.into()
-    }
-
-    fn deferred_fragment_shader() -> ShaderRef {
-        ATMOSPHERE_SHADER_ASSET_PATH.into()
-    }
-}
 
 fn orbit_sun(time: Res<Time>, mut sun_query: Query<(&mut Transform, &DirectionalLight)>) {
     for (mut transform, _) in sun_query.iter_mut() {

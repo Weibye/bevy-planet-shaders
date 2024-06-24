@@ -22,6 +22,24 @@
 
 #import "shaders/noise.wgsl"::rand11;
 
+// Color Palette
+const color_black = vec3(0.0, 0.0, 0.0);
+const color_orange = vec3(1.0, 0.0, 1.0);
+// Water
+const color_water_deep_deep_ocean = vec3(0.16, 0.50, 0.61);
+const color_water_deep_ocean = vec3(0.235, 0.592, 0.666);
+const color_water_ocean = vec3(0.254, 0.647, 0.705);
+const color_water_shallow = vec3(0.360, 0.682, 0.725);
+
+// Land
+const color_vegetation_lush = vec3(0.282, 0.690, 0.396);
+const color_vegetation = vec3(0.588, 0.784, 0.411);
+const color_vegetation_plains = vec3(0.886, 0.847, 0.568);
+const color_dirt = vec3(0.8, 0.721, 0.576);
+const color_highland = vec3(0.650, 0.568, 0.462);
+const color_mountain = vec3(0.486, 0.411, 0.352);
+const color_mountain_peaks = vec3(0.8, 0.8, 0.8);
+
 struct PlanetMaterial {
     // planet_radius: f32,
     planet_seed: u32,
@@ -41,6 +59,22 @@ fn lerp(a: f32, b: f32, t: f32) -> f32 {
 fn norm(min: f32, max: f32, value: f32) -> f32 {
     return (value - min) / (max - min);
 }
+
+fn offset(uv: vec2<f32>, offset: vec2<f32>) -> vec2<f32> {
+    return uv + offset;
+}
+
+fn swirl(uv: vec2<f32>, center: vec2<f32>, strength: f32) -> vec2<f32> {
+    let offset = uv - center;
+    let angle = strength * length(offset);
+    let swirled = vec2<f32>(
+        cos(angle) * offset.x - sin(angle) * offset.y,
+        sin(angle) * offset.x + cos(angle) * offset.y
+    );
+    return center + swirled;
+}
+
+
 
 @fragment
 fn fragment(
@@ -87,26 +121,9 @@ fn fragment(
 
     let humidity_map = polar_region + equator_region;
 
-    // Color Palette
-    let color_black = vec3(0.0, 0.0, 0.0);
-    let color_orange = vec3(1.0, 0.0, 1.0);
-
-    let color_water_deep_deep_ocean = vec3(0.16, 0.50, 0.61);
-    let color_water_deep_ocean = vec3(0.235, 0.592, 0.666);
-    let color_water_ocean = vec3(0.254, 0.647, 0.705);
-    let color_water_shallow = vec3(0.360, 0.682, 0.725);
-
-    let color_vegetation_lush = vec3(0.282, 0.690, 0.396);
-    let color_vegetation = vec3(0.588, 0.784, 0.411);
-    let color_vegetation_plains = vec3(0.886, 0.847, 0.568);
-    let color_dirt = vec3(0.8, 0.721, 0.576);
-    let color_highland = vec3(0.650, 0.568, 0.462);
-    let color_mountain = vec3(0.486, 0.411, 0.352);
-    let color_mountain_peaks = vec3(0.8, 0.8, 0.8);
-
     let poles = smoothstep(0.3, 0.4, distance_from_poles);
 
-    let water_threshold = 0.15;
+    let water_threshold = 0.01;
     let water_area_map = 1.0 - step(water_threshold, elevation);
     let water_normalized_elevation = norm(0.0, water_threshold, elevation * water_area_map);
 
@@ -130,11 +147,26 @@ fn fragment(
 
     let topographic_map = mix(water_topographic_map, land_topographic_map, land_area_map);
 
+    // Mountain ranges
+    let scale_a = 20.0;
+    let scale_b = 40.0;
+    let a = voronoise(vec2(in.uv.x * 4.0, in.uv.y) * scale_a, 1.0, 0.6);
+    let b = voronoise(vec2(in.uv.x, in.uv.y * 2.0) * scale_b, 1.0, 0.4);
+    let result = (a * b); // - 1.0;
+    let res2 = fmod(result, 0.2);
+    // let b = voronoise(swirl(in.uv * 10.0, vec2(0.1, 0.5), 2.0), 1.0, 0.5);
+    // let c = voronoise(offset(in.uv, vec2(2.4, -3.3)) * 30.0, 1.0, 0.5);
+    var mountain_range = clamp(0.0, 1.0, (a + b) - 1.0);
+    let c = fmod(mountain_range, 0.1); // step(0.4, mountain_range);
+    let d = step(0.5, c);
 
-    let final_color = topographic_map;
+    mountain_range = res2;
+
+
+    let final_color = vec3(mountain_range, mountain_range, mountain_range);
 
     pbr_input.material.base_color = vec4(final_color, 1.0);
-    pbr_input.material.reflectance = water_area_map;
+    // pbr_input.material.reflectance = water_area_map;
 
     let overlay = mix(color_black, color_orange, wind_pattern);
     

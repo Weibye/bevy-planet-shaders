@@ -17,6 +17,8 @@
 
 #import bevy_shader_utils::{
     simplex_noise_3d::simplex_noise_3d,
+    perlin_noise_2d::perlin_noise_2d,
+    perlin_noise_3d::perlin_noise_3d,
     voronoise::voronoise
 }
 
@@ -123,7 +125,7 @@ fn fragment(
 
     let poles = smoothstep(0.3, 0.4, distance_from_poles);
 
-    let water_threshold = 0.01;
+    let water_threshold = 0.15;
     let water_area_map = 1.0 - step(water_threshold, elevation);
     let water_normalized_elevation = norm(0.0, water_threshold, elevation * water_area_map);
 
@@ -134,7 +136,18 @@ fn fragment(
     water_topographic_map *= water_area_map; // Restrict water to water areas
 
     let land_area_map = 1.0 - water_area_map;
-    let land_normalized_elevation = norm(water_threshold, 0.5, elevation * land_area_map);
+
+    // Mountain Ranges
+    let perlin_a = perlin_noise_2d(in.uv * 10.0 + 5.0);
+    let perlin_b = perlin_noise_2d(in.uv * 11.0);
+    let perlin_c = perlin_noise_2d(in.uv * 50.0);
+    let perlin_d = perlin_noise_2d(in.uv * 100.0 + 15.0);
+
+    var final_noise = (abs((perlin_a + perlin_b * 0.1 + perlin_c * 0.2 + perlin_d * 0.1) / 4.0) * -1) + 0.1;
+    var land_normalized_elevation = norm(water_threshold, 0.5, elevation * land_area_map);
+    land_normalized_elevation += perlin_a * 1.0 - perlin_b * 0.6 + perlin_c * 0.45;
+    // land_normalized_elevation *= land_area_map;
+
     var land_topographic_map = vec3(land_normalized_elevation, land_normalized_elevation, land_normalized_elevation);
 
     land_topographic_map = mix(color_dirt, color_vegetation, step(0.15, land_normalized_elevation));
@@ -148,24 +161,26 @@ fn fragment(
     let topographic_map = mix(water_topographic_map, land_topographic_map, land_area_map);
 
     // Mountain ranges
-    let scale_a = 20.0;
-    let scale_b = 40.0;
-    let a = voronoise(vec2(in.uv.x * 4.0, in.uv.y) * scale_a, 1.0, 0.6);
-    let b = voronoise(vec2(in.uv.x, in.uv.y * 2.0) * scale_b, 1.0, 0.4);
-    let result = (a * b); // - 1.0;
-    let res2 = fmod(result, 0.2);
-    // let b = voronoise(swirl(in.uv * 10.0, vec2(0.1, 0.5), 2.0), 1.0, 0.5);
-    // let c = voronoise(offset(in.uv, vec2(2.4, -3.3)) * 30.0, 1.0, 0.5);
-    var mountain_range = clamp(0.0, 1.0, (a + b) - 1.0);
-    let c = fmod(mountain_range, 0.1); // step(0.4, mountain_range);
-    let d = step(0.5, c);
+    // let scale_a = 20.0;
+    // let scale_b = 40.0;
+    // let a = voronoise(vec2(in.uv.x * 4.0, in.uv.y) * scale_a, 1.0, 0.6);
+    // let b = voronoise(vec2(in.uv.x, in.uv.y * 2.0) * scale_b, 1.0, 0.4);
+    // let result = (a * b); // - 1.0;
+    // let res2 = fmod(result, 0.2);
+    // // let b = voronoise(swirl(in.uv * 10.0, vec2(0.1, 0.5), 2.0), 1.0, 0.5);
+    // // let c = voronoise(offset(in.uv, vec2(2.4, -3.3)) * 30.0, 1.0, 0.5);
+    // var mountain_range = clamp(0.0, 1.0, (a + b) - 1.0);
+    // let c = fmod(mountain_range, 0.1); // step(0.4, mountain_range);
+    // let d = step(0.5, c);
 
-    mountain_range = res2;
+    // mountain_range = res2;
 
+    final_noise = land_normalized_elevation;
 
-    let final_color = vec3(mountain_range, mountain_range, mountain_range);
+    let final_color = vec3(final_noise, final_noise, final_noise);
 
-    pbr_input.material.base_color = vec4(final_color, 1.0);
+    // pbr_input.material.base_color = vec4(final_color, 1.0);
+    pbr_input.material.base_color = vec4(topographic_map, 1.0);
     // pbr_input.material.reflectance = water_area_map;
 
     let overlay = mix(color_black, color_orange, wind_pattern);

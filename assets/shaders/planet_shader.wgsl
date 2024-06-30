@@ -145,7 +145,7 @@ fn fragment(
 
     var final_noise = (abs((perlin_a + perlin_b * 0.1 + perlin_c * 0.2 + perlin_d * 0.1) / 4.0) * -1) + 0.1;
     var land_normalized_elevation = norm(water_threshold, 0.5, elevation * land_area_map);
-    land_normalized_elevation += perlin_a * 1.0 - perlin_b * 0.6 + perlin_c * 0.45;
+    // land_normalized_elevation += perlin_a * 1.0 - perlin_b * 0.6 + perlin_c * 0.45;
     // land_normalized_elevation *= land_area_map;
 
     var land_topographic_map = vec3(land_normalized_elevation, land_normalized_elevation, land_normalized_elevation);
@@ -156,7 +156,7 @@ fn fragment(
     land_topographic_map = mix(land_topographic_map, color_dirt, step(0.65, land_normalized_elevation));
     land_topographic_map = mix(land_topographic_map, color_highland, step(0.68, land_normalized_elevation));
     land_topographic_map = mix(land_topographic_map, color_mountain, step(0.85, land_normalized_elevation));
-    land_topographic_map = mix(land_topographic_map, color_mountain_peaks, step(0.98, land_normalized_elevation));
+    land_topographic_map = mix(land_topographic_map, color_mountain_peaks, step(0.91, land_normalized_elevation));
 
     let topographic_map = mix(water_topographic_map, land_topographic_map, land_area_map);
 

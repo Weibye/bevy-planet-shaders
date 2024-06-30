@@ -5,10 +5,12 @@ use bevy::{
     prelude::*,
 };
 use celestial_shaders::{AtmosphereMaterial, CelestialShadersPlugin, PlanetMaterial};
+use pcg_planet::{spherical_cuboid, PcgPlanetPlugin};
 use rand::Rng;
 
 mod celestial_data;
 mod celestial_shaders;
+mod pcg_planet;
 
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use bevy_shader_utils::ShaderUtilsPlugin;
@@ -21,7 +23,8 @@ fn main() {
             (
                 CelestialShadersPlugin,
                 ShaderUtilsPlugin,
-                PanOrbitCameraPlugin
+                PanOrbitCameraPlugin,
+                PcgPlanetPlugin,
             )))
         .add_systems(Startup, setup)
         .add_systems(Update, (orbit_sun, create_new_seed))
@@ -36,12 +39,11 @@ fn setup(
     mut atmo_mats: ResMut<Assets<ExtendedMaterial<StandardMaterial, AtmosphereMaterial>>>,
 ) {
     let mut rng = rand::thread_rng();
+    const RADIUS: f32 = 180.0;
     
-    // Create planet
+    // // Create planet
     commands.spawn(MaterialMeshBundle {
-        mesh: meshes.add(Sphere {
-            radius: 180.0,
-        }.mesh()),
+        mesh: meshes.add(spherical_cuboid(RADIUS, 16, true)),
         transform: Transform::from_xyz(0.0, 0.0, 0.0),
         material: planet_mats.add(ExtendedMaterial {
             base: StandardMaterial {

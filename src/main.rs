@@ -79,8 +79,8 @@ fn setup(
     //     ..default()
     // });
 
-    let skybox_texture = skybox::generate_skybox(256, 256);
-    let texture_handle = asset_server.add(skybox_texture);
+    // let skybox_texture = skybox::generate_skybox(256, 256);
+    // let texture_handle = asset_server.add(skybox_texture);
 
     // camera
     commands.spawn((
@@ -89,10 +89,10 @@ fn setup(
             ..default()
         },
         PanOrbitCamera::default(),
-        Skybox {
-            image: texture_handle.clone(),
-            brightness: 1000.0,
-        },
+        // Skybox {
+        //     image: texture_handle.clone(),
+        //     brightness: 1000.0,
+        // },
     ));
 
     // ambient light

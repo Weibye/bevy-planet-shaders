@@ -2,16 +2,16 @@ use bevy::{
     app::{App, Plugin}, 
     asset::Asset, 
     pbr::{
-        ExtendedMaterial, MaterialExtension, MaterialPlugin, StandardMaterial
+        ExtendedMaterial, Material, MaterialExtension, MaterialPlugin, StandardMaterial
     }, 
     reflect::TypePath, render::{
         color::Color, render_resource::{AsBindGroup, ShaderRef}
-    }, 
-    DefaultPlugins
+    } 
 };
 
 const PLANET_SHADER_ASSET_PATH: &str = "shaders/planet_shader.wgsl";
 const ATMOSPHERE_SHADER_ASSET_PATH: &str = "shaders/atmosphere_shader.wgsl";
+const SKYBOX_SHADER_ASSET_PATH: &str = "shaders/skybox.wgsl";
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct PlanetMaterial {
@@ -39,11 +39,11 @@ impl MaterialExtension for PlanetMaterial {
 }
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
-pub struct AtmosphereMaterial {
-    pub planet_radius: f32,
-    pub atmosphere_radius: f32,
-    pub atmosphere_color: Color,
-    pub atmosphere_density: f32,
+pub(crate) struct AtmosphereMaterial {
+    pub(crate) planet_radius: f32,
+    pub(crate) atmosphere_radius: f32,
+    pub(crate) atmosphere_color: Color,
+    pub(crate) atmosphere_density: f32,
 }
 
 impl MaterialExtension for AtmosphereMaterial {
@@ -56,6 +56,23 @@ impl MaterialExtension for AtmosphereMaterial {
     }
 }
 
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+pub(crate) struct SkyboxMaterial {
+    #[uniform(100)]
+    pub seed: u32
+}
+
+impl Material for SkyboxMaterial {
+
+    fn fragment_shader() -> ShaderRef {
+        SKYBOX_SHADER_ASSET_PATH.into()
+    }
+
+    fn alpha_mode(&self) -> bevy::prelude::AlphaMode {
+        bevy::prelude::AlphaMode::Opaque
+    }
+}
+
 
 pub struct CelestialShadersPlugin;
 
@@ -63,7 +80,8 @@ impl Plugin for CelestialShadersPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(( 
             MaterialPlugin::<ExtendedMaterial<StandardMaterial, PlanetMaterial>>::default(),
-            MaterialPlugin::<ExtendedMaterial<StandardMaterial, AtmosphereMaterial>>::default()
+            MaterialPlugin::<ExtendedMaterial<StandardMaterial, AtmosphereMaterial>>::default(),
+            MaterialPlugin::<SkyboxMaterial>::default(),
         ));
     }
 }

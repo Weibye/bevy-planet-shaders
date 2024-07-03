@@ -4,6 +4,7 @@ use noise::{core::simplex, NoiseFn, Perlin, Simplex};
 const SEED : u32 = 8564132;
 const SCALE : f32 = 10.0;
 
+/// Generates a skybox image
 pub(crate) fn generate_skybox(width: u32, height: u32) -> Image {
 
     println!("Generating skybox");

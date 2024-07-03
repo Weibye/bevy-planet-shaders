@@ -1,12 +1,12 @@
 use bevy::{
-    app::{App, Plugin}, 
-    asset::Asset, 
-    pbr::{
-        ExtendedMaterial, Material, MaterialExtension, MaterialPlugin, StandardMaterial
-    }, 
-    reflect::TypePath, render::{
-        color::Color, render_resource::{AsBindGroup, ShaderRef}
-    } 
+    app::{App, Plugin},
+    asset::Asset,
+    pbr::{ExtendedMaterial, Material, MaterialExtension, MaterialPlugin, StandardMaterial},
+    reflect::TypePath,
+    render::{
+        color::Color,
+        render_resource::{AsBindGroup, ShaderRef},
+    },
 };
 
 const PLANET_SHADER_ASSET_PATH: &str = "shaders/planet_shader.wgsl";
@@ -16,7 +16,7 @@ const SKYBOX_SHADER_ASSET_PATH: &str = "shaders/skybox.wgsl";
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct PlanetMaterial {
     // planet_radius: f32,
-    
+
     // #[uniform(101)]
     #[uniform(100)]
     pub planet_seed: u32,
@@ -59,11 +59,10 @@ impl MaterialExtension for AtmosphereMaterial {
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub(crate) struct SkyboxMaterial {
     #[uniform(100)]
-    pub seed: u32
+    pub seed: u32,
 }
 
 impl Material for SkyboxMaterial {
-
     fn fragment_shader() -> ShaderRef {
         SKYBOX_SHADER_ASSET_PATH.into()
     }
@@ -73,12 +72,11 @@ impl Material for SkyboxMaterial {
     }
 }
 
-
 pub struct CelestialShadersPlugin;
 
 impl Plugin for CelestialShadersPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(( 
+        app.add_plugins((
             MaterialPlugin::<ExtendedMaterial<StandardMaterial, PlanetMaterial>>::default(),
             MaterialPlugin::<ExtendedMaterial<StandardMaterial, AtmosphereMaterial>>::default(),
             MaterialPlugin::<SkyboxMaterial>::default(),

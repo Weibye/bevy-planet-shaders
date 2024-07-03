@@ -1,4 +1,24 @@
-use bevy::{app::{App, Plugin, Startup, Update}, asset::Assets, math::{Rect, Vec2, Vec3}, pbr::{wireframe::{Wireframe, WireframeConfig, WireframePlugin}, PbrBundle, StandardMaterial}, prelude::{Commands, Component, Cuboid, Direction3d, Plane3d, Query, ResMut, Sphere}, render::{camera::Camera, color::Color, mesh::{shape, Indices, Mesh, Meshable, PrimitiveTopology}, render_asset::RenderAssetUsages}, transform::{components::{GlobalTransform, Transform}, TransformBundle}, ui::node_bundles};
+use bevy::{
+    app::{App, Plugin, Startup, Update},
+    asset::Assets,
+    math::{Rect, Vec2, Vec3},
+    pbr::{
+        wireframe::{Wireframe, WireframeConfig, WireframePlugin},
+        PbrBundle, StandardMaterial,
+    },
+    prelude::{Commands, Component, Cuboid, Direction3d, Plane3d, Query, ResMut, Sphere},
+    render::{
+        camera::Camera,
+        color::Color,
+        mesh::{shape, Indices, Mesh, Meshable, PrimitiveTopology},
+        render_asset::RenderAssetUsages,
+    },
+    transform::{
+        components::{GlobalTransform, Transform},
+        TransformBundle,
+    },
+    ui::node_bundles,
+};
 
 pub(crate) struct PcgPlanetPlugin;
 
@@ -7,14 +27,14 @@ impl Plugin for PcgPlanetPlugin {
         // app.add_systems(Startup, spawn_planet);
         app.add_plugins(WireframePlugin);
         app.insert_resource(WireframeConfig {
-                // The global wireframe config enables drawing of wireframes on every mesh,
-                // except those with `NoWireframe`. Meshes with `Wireframe` will always have a wireframe,
-                // regardless of the global configuration.
-                global: false,
-                // Controls the default color of all wireframes. Used as the default color for global wireframes.
-                // Can be changed per mesh using the `WireframeColor` component.
-                default_color: Color::WHITE,
-            });
+            // The global wireframe config enables drawing of wireframes on every mesh,
+            // except those with `NoWireframe`. Meshes with `Wireframe` will always have a wireframe,
+            // regardless of the global configuration.
+            global: false,
+            // Controls the default color of all wireframes. Used as the default color for global wireframes.
+            // Can be changed per mesh using the `WireframeColor` component.
+            default_color: Color::WHITE,
+        });
         // app.add_systems(Update, hierarcical_lod);
     }
 }
@@ -34,9 +54,7 @@ fn spawn_planet(
     //     Wireframe
     // ));
     const LOD_LEVELS: u32 = 4;
-    for i in 0..LOD_LEVELS {
-
-    }
+    for i in 0..LOD_LEVELS {}
     let quad = Quad {
         rect: Rect::from_center_size(Vec2::ZERO, Vec2::splat(RADIUS)),
         transform: Transform::from_translation(Vec3::ZERO),
@@ -45,46 +63,47 @@ fn spawn_planet(
 
     for n in children {
         commands.spawn((n.clone(), n.transform.clone()));
-        commands.spawn((PbrBundle {
-            mesh: meshes.add(n.mesh()),
-            material: materials.add(Color::rgba(0.0, 0.0, 0.0, 0.0)),
-            transform: n.transform.clone(),
-            ..Default::default()
+        commands.spawn((
+            PbrBundle {
+                mesh: meshes.add(n.mesh()),
+                material: materials.add(Color::rgba(0.0, 0.0, 0.0, 0.0)),
+                transform: n.transform.clone(),
+                ..Default::default()
             },
-            Wireframe
+            Wireframe,
         ));
     }
     commands.spawn((quad.clone(), TransformBundle::default()));
 
-
-    commands.spawn((PbrBundle {
+    commands.spawn((
+        PbrBundle {
             mesh: meshes.add(quad.mesh()),
             material: materials.add(Color::rgba(0.0, 0.0, 0.0, 0.0)),
             transform: quad.transform.clone(),
             ..Default::default()
-            },
-            Wireframe
-        ));
+        },
+        Wireframe,
+    ));
 
     // // Each quad should have its own AABB
 }
 
-fn calculate_lod_quads(parent: &Quad) -> Vec<Quad>
-{
+fn calculate_lod_quads(parent: &Quad) -> Vec<Quad> {
     let mut quads = Vec::new();
     for dir in [
         Vec2::new(-1.0, -1.0),
         Vec2::new(1.0, -1.0),
         Vec2::new(-1.0, 1.0),
-        Vec2::new(1.0, 1.0)
+        Vec2::new(1.0, 1.0),
     ] {
-
         let quad = Quad {
             rect: Rect::from_center_size(Vec2::ZERO, parent.rect.half_size()),
-            transform: parent.transform * Transform::from_translation(
-                Vec3::new(dir.x, 0.0, dir.y)
-                * Vec3::new(parent.rect.half_size().x, 0.0, parent.rect.half_size().y) / 2.0
-            )
+            transform: parent.transform
+                * Transform::from_translation(
+                    Vec3::new(dir.x, 0.0, dir.y)
+                        * Vec3::new(parent.rect.half_size().x, 0.0, parent.rect.half_size().y)
+                        / 2.0,
+                ),
         };
         quads.push(quad);
     }
@@ -108,8 +127,6 @@ fn hierarcical_lod(
         // If the quad is too small, merge it with its parent
     }
     // if the quad is too large, split it into 4 children
-
-
 }
 
 #[derive(Component, Clone)]
@@ -150,7 +167,10 @@ impl Meshable for Quad {
         indices.push(3);
         indices.push(2);
 
-        let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default());
+        let mut mesh = Mesh::new(
+            PrimitiveTopology::TriangleList,
+            RenderAssetUsages::default(),
+        );
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
         mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);

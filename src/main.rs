@@ -1,33 +1,39 @@
 use std::f32::consts::PI;
 
 use bevy::{
-    asset::LoadState, core_pipeline::Skybox, pbr::{wireframe::Wireframe, CascadeShadowConfigBuilder, ExtendedMaterial}, prelude::*, render::render_resource::{Extent3d, TextureViewDescriptor, TextureViewDimension}
+    asset::LoadState,
+    core_pipeline::Skybox,
+    pbr::{wireframe::Wireframe, CascadeShadowConfigBuilder, ExtendedMaterial},
+    prelude::*,
+    render::render_resource::{Extent3d, TextureViewDescriptor, TextureViewDimension},
 };
-use celestial_shaders::{AtmosphereMaterial, CelestialShadersPlugin, PlanetMaterial, SkyboxMaterial};
+use celestial_shaders::{
+    AtmosphereMaterial, CelestialShadersPlugin, PlanetMaterial, SkyboxMaterial,
+};
 use geometry::spherical_cuboid;
-use pcg_planet::{PcgPlanetPlugin};
+use pcg_planet::PcgPlanetPlugin;
 use rand::Rng;
 
 mod celestial_data;
 mod celestial_shaders;
-mod skybox;
-mod pcg_planet;
 mod geometry;
+mod pcg_planet;
+mod skybox;
 
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use bevy_shader_utils::ShaderUtilsPlugin;
 
-
-
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, 
+        .add_plugins((
+            DefaultPlugins,
             (
                 CelestialShadersPlugin,
                 ShaderUtilsPlugin,
                 PanOrbitCameraPlugin,
                 PcgPlanetPlugin,
-            )))
+            ),
+        ))
         .add_systems(Startup, setup)
         .add_systems(Update, (orbit_sun, create_new_seed))
         .run();
@@ -44,7 +50,7 @@ fn setup(
 ) {
     let mut rng = rand::thread_rng();
     const RADIUS: f32 = 180.0;
-    
+
     // Create planet
     commands.spawn(MaterialMeshBundle {
         mesh: meshes.add(spherical_cuboid(RADIUS, 16, false, true)),
@@ -85,12 +91,13 @@ fn setup(
     // });
 
     // Skybox
-    commands.spawn((MaterialMeshBundle {
-        mesh: meshes.add(spherical_cuboid(35000.0, 32, true, true)),
-        material: skybox_mats.add(SkyboxMaterial {
-            seed: rng.gen::<u32>(),
-        }),
-        ..default()
+    commands.spawn((
+        MaterialMeshBundle {
+            mesh: meshes.add(spherical_cuboid(35000.0, 32, true, true)),
+            material: skybox_mats.add(SkyboxMaterial {
+                seed: rng.gen::<u32>(),
+            }),
+            ..default()
         },
         // Wireframe
     ));
@@ -114,7 +121,7 @@ fn setup(
     // ambient light
     commands.insert_resource(AmbientLight {
         color: Color::WHITE,
-        brightness: 500.0
+        brightness: 500.0,
     });
 
     // directional 'sun' light
@@ -147,7 +154,6 @@ struct Cubemap {
     is_loaded: bool,
     image_handle: Handle<Image>,
 }
-
 
 fn orbit_sun(time: Res<Time>, mut sun_query: Query<(&mut Transform, &DirectionalLight)>) {
     for (mut transform, _) in sun_query.iter_mut() {

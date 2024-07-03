@@ -1,10 +1,20 @@
-use bevy::{math::Vec3, render::{mesh::{Indices, Mesh, PrimitiveTopology}, render_asset::RenderAssetUsages}};
+use bevy::{
+    math::Vec3,
+    render::{
+        mesh::{Indices, Mesh, PrimitiveTopology},
+        render_asset::RenderAssetUsages,
+    },
+};
 
 /// A module for generating various geometric shapes.
 
 /// Creates a spherical cuboid mesh with the given radius and subdivisions.
-pub(crate) fn spherical_cuboid(radius: f32, subdivisions: u32, invert: bool, inflate: bool) -> Mesh {
-
+pub(crate) fn spherical_cuboid(
+    radius: f32,
+    subdivisions: u32,
+    invert: bool,
+    inflate: bool,
+) -> Mesh {
     let mut positions = Vec::new();
     let mut normals = Vec::new();
     let mut uvs = Vec::new(); // Optional: For texture mapping
@@ -17,11 +27,11 @@ pub(crate) fn spherical_cuboid(radius: f32, subdivisions: u32, invert: bool, inf
     // Generate vertices and normals for each face
     for face in 0..6 {
         let (dir, u, v) = match face {
-            0 => (Vec3::X, Vec3::Y, Vec3::Z), // Positive X
+            0 => (Vec3::X, Vec3::Y, Vec3::Z),  // Positive X
             1 => (-Vec3::X, Vec3::Z, Vec3::Y), // Negative X
-            2 => (Vec3::Y, Vec3::Z, Vec3::X), // Positive Y
+            2 => (Vec3::Y, Vec3::Z, Vec3::X),  // Positive Y
             3 => (-Vec3::Y, Vec3::X, Vec3::Z), // Negative Y
-            4 => (Vec3::Z, Vec3::X, Vec3::Y), // Positive Z
+            4 => (Vec3::Z, Vec3::X, Vec3::Y),  // Positive Z
             5 => (-Vec3::Z, Vec3::Y, Vec3::X), // Negative Z
             _ => unreachable!(),
         };
@@ -41,13 +51,18 @@ pub(crate) fn spherical_cuboid(radius: f32, subdivisions: u32, invert: bool, inf
 
                 // Displace the vertex of the cubiod according to the radius
                 // This will turn it into a sphere
-                if inflate { pos = normal * radius; }
+                if inflate {
+                    pos = normal * radius;
+                }
 
                 positions.push([pos.x, pos.y, pos.z]);
                 normals.push([normal.x, normal.y, normal.z]);
 
                 // Optional: Calculate UVs for texture mapping
-                uvs.push([i as f32 / subdivisions as f32, j as f32 / subdivisions as f32]);
+                uvs.push([
+                    i as f32 / subdivisions as f32,
+                    j as f32 / subdivisions as f32,
+                ]);
             }
         }
 
@@ -77,7 +92,10 @@ pub(crate) fn spherical_cuboid(radius: f32, subdivisions: u32, invert: bool, inf
         }
     }
 
-    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default());
+    let mut mesh = Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
+    );
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);

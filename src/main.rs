@@ -34,14 +34,14 @@ mod pcg_planet;
 mod skybox;
 
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-// use bevy_shader_utils::ShaderUtilsPlugin;
+use bevy_shader_utils::ShaderUtilsPlugin;
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
             CelestialShadersPlugin,
-            // ShaderUtilsPlugin,
+            ShaderUtilsPlugin,
             PanOrbitCameraPlugin,
             PcgPlanetPlugin,
         ))

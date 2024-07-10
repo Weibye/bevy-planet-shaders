@@ -37,5 +37,5 @@ fn pcg4d(p: vec4u) -> vec4u {
 // fn rand33(f: vec3f) -> vec3f { return vec3f(hash33(bitcast<vec3u>(f))) / f32(0xffffffff); }
 // fn rand44(f: vec4f) -> vec4f { return vec4f(hash44(bitcast<vec4u>(f))) / f32(0xffffffff); }
 
-// fn rand11(n: f32) -> f32 { return fract(sin(n) * 43758.5453123); }
-// fn rand22(n: vec2f) -> f32 { return fract(sin(dot(n, vec2f(12.9898, 4.1414))) * 43758.5453); }
+fn rand11(n: f32) -> f32 { return fract(sin(n) * 43758.5453123); }
+fn rand22(n: vec2f) -> f32 { return fract(sin(dot(n, vec2f(12.9898, 4.1414))) * 43758.5453); }

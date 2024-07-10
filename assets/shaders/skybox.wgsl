@@ -1,16 +1,16 @@
 #import bevy_pbr::forward_io::VertexOutput
 
-// #import bevy_shader_utils::{
-//     simplex_noise_3d::simplex_noise_3d,
-//     simplex_noise_2d::simplex_noise_2d,
-// }
-// #import "shaders/noise.wgsl"::rand11;
+#import bevy_shader_utils::{
+    simplex_noise_3d::simplex_noise_3d
+    // simplex_noise_2d::simplex_noise_2d,
+}
+#import "shaders/noise.wgsl"::rand11;
 
 @group(2) @binding(100) var<uniform> seed: u32;
 
-// fn rand_range(min: f32, max: f32) -> f32 {
-//     return min + rand11(f32(seed)) * (max - min);
-// }
+fn rand_range(min: f32, max: f32) -> f32 {
+    return min + rand11(f32(seed)) * (max - min);
+}
 
 @fragment
 fn fragment(
@@ -23,16 +23,16 @@ fn fragment(
     // Project to sphere
     let sphere_position = normalize(world_position);
 
-    // let oct1 = simplex_noise_3d(vec3<f32>(sphere_position * 0.7));
-    // let oct2 = simplex_noise_3d(vec3<f32>(sphere_position * 0.3) + vec3<f32>(rand_range(1.0, 2.0), 3.0, .3));
-    // let oct3 = simplex_noise_3d(vec3<f32>(sphere_position * 150.0) + vec3<f32>(rand_range(4.0, 28.0), 3.0, .3));
+    let oct1 = simplex_noise_3d(vec3<f32>(sphere_position * 0.7));
+    let oct2 = simplex_noise_3d(vec3<f32>(sphere_position * 0.3) + vec3<f32>(rand_range(1.0, 2.0), 3.0, .3));
+    let oct3 = simplex_noise_3d(vec3<f32>(sphere_position * 150.0) + vec3<f32>(rand_range(4.0, 28.0), 3.0, .3));
 
-    // let nebula_mask = (oct2 + oct1) - 0.2;
-    // var ramp = smoothstep(0.3, 0.4, nebula_mask);
-    // ramp = mix(0.0, oct3, ramp);
+    let nebula_mask = (oct2 + oct1) - 0.2;
+    var ramp = smoothstep(0.3, 0.4, nebula_mask);
+    ramp = mix(0.0, oct3, ramp);
     
 
-    return vec4<f32>(1.0, 0.0, 0.0, 1.0);
+    return vec4<f32>(ramp, ramp, ramp, 1.0);
     
     // let detail_noise = simplex_noise_2d(in.uv.xy * 50.0);
     // let quantized_noise = floor(detail_noise * 20.0) / 20.0; // Quantize space

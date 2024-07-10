@@ -907,6 +907,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_shader_utils"
+version = "0.7.0"
+dependencies = [
+ "bevy_app",
+ "bevy_asset",
+ "bevy_render",
+]
+
+[[package]]
 name = "bevy_sprite"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3045,6 +3054,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_panorbit_camera",
+ "bevy_shader_utils",
  "noise",
  "rand",
 ]

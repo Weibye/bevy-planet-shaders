@@ -1,16 +1,28 @@
 use std::f32::consts::PI;
 
 use bevy::{
-    asset::LoadState,
-    core_pipeline::Skybox,
-    pbr::{wireframe::Wireframe, CascadeShadowConfigBuilder, ExtendedMaterial},
-    prelude::*,
-    render::render_resource::{Extent3d, TextureViewDescriptor, TextureViewDimension},
+    app::{App, Startup, Update},
+    asset::{AssetServer, Assets, Handle},
+    color::Color,
+    input::ButtonInput,
+    math::{Quat, Vec3},
+    pbr::{
+        light_consts, wireframe::Wireframe, AmbientLight, CascadeShadowConfigBuilder, DirectionalLight, DirectionalLightBundle, ExtendedMaterial, MaterialMeshBundle, StandardMaterial
+    },
+    prelude::{Camera3dBundle, Commands, KeyCode, Query, Res, ResMut, Resource},
+    render::{mesh::Mesh, texture::Image},
+    time::Time,
+    transform::components::Transform,
+    utils::default,
+    DefaultPlugins,
 };
-use celestial_shaders::{
-    AtmosphereMaterial, CelestialShadersPlugin, PlanetMaterial, SkyboxMaterial,
-};
+use celestial_shaders::{AtmosphereMaterial, CelestialShadersPlugin, PlanetMaterial, SkyboxMaterial};
 use geometry::spherical_cuboid;
+// use celestial_shaders::{
+//     AtmosphereMaterial, CelestialShadersPlugin,
+//     // PlanetMaterial,
+//     SkyboxMaterial,
+// };
 use pcg_planet::PcgPlanetPlugin;
 use rand::Rng;
 
@@ -27,12 +39,10 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            (
-                CelestialShadersPlugin,
-                ShaderUtilsPlugin,
-                PanOrbitCameraPlugin,
-                PcgPlanetPlugin,
-            ),
+            CelestialShadersPlugin,
+            ShaderUtilsPlugin,
+            PanOrbitCameraPlugin,
+            PcgPlanetPlugin,
         ))
         .add_systems(Startup, setup)
         .add_systems(Update, (orbit_sun, create_new_seed))
@@ -57,7 +67,7 @@ fn setup(
         transform: Transform::from_xyz(0.0, 0.0, 0.0),
         material: planet_mats.add(ExtendedMaterial {
             base: StandardMaterial {
-                base_color: Color::rgb(0.0, 0.0, 1.0),
+                base_color: Color::srgb(0.0, 0.0, 1.0),
                 ..Default::default()
             },
             extension: PlanetMaterial {
@@ -99,7 +109,7 @@ fn setup(
             }),
             ..default()
         },
-        // Wireframe
+        Wireframe,
     ));
 
     // let skybox_texture = skybox::generate_skybox(256, 256);
@@ -167,7 +177,7 @@ fn create_new_seed(
 ) {
     // When the user presses space, we want to create a new seed
     if keys.just_pressed(KeyCode::Space) {
-        let seed = rand::thread_rng().gen();
+        let seed: u32 = rand::thread_rng().gen();
         materials.iter_mut().for_each(|(_handle, material)| {
             material.extension.planet_seed = seed;
         });

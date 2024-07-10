@@ -1,8 +1,8 @@
 #import bevy_pbr::forward_io::VertexOutput
 
 #import bevy_shader_utils::{
-    simplex_noise_3d::simplex_noise_3d,
-    simplex_noise_2d::simplex_noise_2d,
+    simplex_noise_3d::simplex_noise_3d
+    // simplex_noise_2d::simplex_noise_2d,
 }
 #import "shaders/noise.wgsl"::rand11;
 

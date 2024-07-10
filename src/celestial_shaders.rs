@@ -1,17 +1,27 @@
 use bevy::{
     app::{App, Plugin},
     asset::Asset,
+    color::{Color, LinearRgba},
     pbr::{ExtendedMaterial, Material, MaterialExtension, MaterialPlugin, StandardMaterial},
     reflect::TypePath,
-    render::{
-        color::Color,
-        render_resource::{AsBindGroup, ShaderRef},
-    },
+    render::render_resource::{AsBindGroup, ShaderRef},
 };
 
 const PLANET_SHADER_ASSET_PATH: &str = "shaders/planet_shader.wgsl";
 const ATMOSPHERE_SHADER_ASSET_PATH: &str = "shaders/atmosphere_shader.wgsl";
 const SKYBOX_SHADER_ASSET_PATH: &str = "shaders/skybox.wgsl";
+
+pub struct CelestialShadersPlugin;
+
+impl Plugin for CelestialShadersPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugins((
+            MaterialPlugin::<ExtendedMaterial<StandardMaterial, PlanetMaterial>>::default(),
+            MaterialPlugin::<ExtendedMaterial<StandardMaterial, AtmosphereMaterial>>::default(),
+            MaterialPlugin::<SkyboxMaterial>::default(),
+        ));
+    }
+}
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct PlanetMaterial {
@@ -69,17 +79,5 @@ impl Material for SkyboxMaterial {
 
     fn alpha_mode(&self) -> bevy::prelude::AlphaMode {
         bevy::prelude::AlphaMode::Opaque
-    }
-}
-
-pub struct CelestialShadersPlugin;
-
-impl Plugin for CelestialShadersPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins((
-            MaterialPlugin::<ExtendedMaterial<StandardMaterial, PlanetMaterial>>::default(),
-            MaterialPlugin::<ExtendedMaterial<StandardMaterial, AtmosphereMaterial>>::default(),
-            MaterialPlugin::<SkyboxMaterial>::default(),
-        ));
     }
 }

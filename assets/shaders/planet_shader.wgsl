@@ -1,5 +1,4 @@
 #import bevy_pbr::{
-    pbr_fragment::pbr_input_from_standard_material,
     pbr_functions::alpha_discard,
 }
 
@@ -10,6 +9,7 @@
 }
 #else
 #import bevy_pbr::{
+    pbr_fragment::pbr_input_from_standard_material,
     forward_io::{VertexOutput, FragmentOutput},
     pbr_functions::{apply_pbr_lighting, main_pass_post_lighting_processing},
 }
@@ -184,7 +184,7 @@ fn fragment(
     // pbr_input.material.reflectance = water_area_map;
 
     let overlay = mix(color_black, color_orange, wind_pattern);
-    
+
     var out: FragmentOutput;
     out.color = apply_pbr_lighting(pbr_input);
     

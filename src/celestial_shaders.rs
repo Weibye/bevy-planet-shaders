@@ -7,52 +7,64 @@ use bevy::{
     render::render_resource::{AsBindGroup, ShaderRef},
 };
 
-// const PLANET_SHADER_ASSET_PATH: &str = "shaders/planet_shader.wgsl";
-// const ATMOSPHERE_SHADER_ASSET_PATH: &str = "shaders/atmosphere_shader.wgsl";
+const PLANET_SHADER_ASSET_PATH: &str = "shaders/planet_shader.wgsl";
+const ATMOSPHERE_SHADER_ASSET_PATH: &str = "shaders/atmosphere_shader.wgsl";
 const SKYBOX_SHADER_ASSET_PATH: &str = "shaders/skybox.wgsl";
 
-// // #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
-// // pub struct PlanetMaterial {
-// //     // planet_radius: f32,
+pub struct CelestialShadersPlugin;
 
-// //     // #[uniform(101)]
-// //     #[uniform(100)]
-// //     pub planet_seed: u32,
-// //     // #[texture(1)]
-// //     // #[sampler(2)]
-// //     // color_texture: Option<Handle<Image>>,
-// //     // alpha_mode: AlphaMode,
-// // }
+impl Plugin for CelestialShadersPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugins((
+            MaterialPlugin::<ExtendedMaterial<StandardMaterial, PlanetMaterial>>::default(),
+            MaterialPlugin::<ExtendedMaterial<StandardMaterial, AtmosphereMaterial>>::default(),
+            MaterialPlugin::<SkyboxMaterial>::default(),
+        ));
+    }
+}
 
-// // /// The Material trait is very configurable, but comes with sensible defaults for all methods.
-// // /// You only need to implement functions for features that need non-default behavior. See the Material api docs for details!
-// // impl MaterialExtension for PlanetMaterial {
-// //     fn fragment_shader() -> ShaderRef {
-// //         PLANET_SHADER_ASSET_PATH.into()
-// //     }
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+pub struct PlanetMaterial {
+    // planet_radius: f32,
 
-// //     fn deferred_fragment_shader() -> ShaderRef {
-// //         PLANET_SHADER_ASSET_PATH.into()
-// //     }
-// // }
+    // #[uniform(101)]
+    #[uniform(100)]
+    pub planet_seed: u32,
+    // #[texture(1)]
+    // #[sampler(2)]
+    // color_texture: Option<Handle<Image>>,
+    // alpha_mode: AlphaMode,
+}
 
-// #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
-// pub(crate) struct AtmosphereMaterial {
-//     pub(crate) planet_radius: f32,
-//     pub(crate) atmosphere_radius: f32,
-//     pub(crate) atmosphere_color: Color,
-//     pub(crate) atmosphere_density: f32,
-// }
+/// The Material trait is very configurable, but comes with sensible defaults for all methods.
+/// You only need to implement functions for features that need non-default behavior. See the Material api docs for details!
+impl MaterialExtension for PlanetMaterial {
+    fn fragment_shader() -> ShaderRef {
+        PLANET_SHADER_ASSET_PATH.into()
+    }
 
-// impl MaterialExtension for AtmosphereMaterial {
-//     fn fragment_shader() -> ShaderRef {
-//         ATMOSPHERE_SHADER_ASSET_PATH.into()
-//     }
+    fn deferred_fragment_shader() -> ShaderRef {
+        PLANET_SHADER_ASSET_PATH.into()
+    }
+}
 
-//     fn deferred_fragment_shader() -> ShaderRef {
-//         ATMOSPHERE_SHADER_ASSET_PATH.into()
-//     }
-// }
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+pub(crate) struct AtmosphereMaterial {
+    pub(crate) planet_radius: f32,
+    pub(crate) atmosphere_radius: f32,
+    pub(crate) atmosphere_color: Color,
+    pub(crate) atmosphere_density: f32,
+}
+
+impl MaterialExtension for AtmosphereMaterial {
+    fn fragment_shader() -> ShaderRef {
+        ATMOSPHERE_SHADER_ASSET_PATH.into()
+    }
+
+    fn deferred_fragment_shader() -> ShaderRef {
+        ATMOSPHERE_SHADER_ASSET_PATH.into()
+    }
+}
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub(crate) struct SkyboxMaterial {
@@ -67,17 +79,5 @@ impl Material for SkyboxMaterial {
 
     fn alpha_mode(&self) -> bevy::prelude::AlphaMode {
         bevy::prelude::AlphaMode::Opaque
-    }
-}
-
-pub struct CelestialShadersPlugin;
-
-impl Plugin for CelestialShadersPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins((
-            // MaterialPlugin::<ExtendedMaterial<StandardMaterial, PlanetMaterial>>::default(),
-            // MaterialPlugin::<ExtendedMaterial<StandardMaterial, AtmosphereMaterial>>::default(),
-            MaterialPlugin::<SkyboxMaterial>::default(),
-        ));
     }
 }

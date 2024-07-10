@@ -7,8 +7,8 @@ use bevy::{
     input::ButtonInput,
     math::{Quat, Vec3},
     pbr::{
-        light_consts, AmbientLight, CascadeShadowConfigBuilder, DirectionalLight,
-        DirectionalLightBundle,
+        light_consts, wireframe::Wireframe, AmbientLight, CascadeShadowConfigBuilder,
+        DirectionalLight, DirectionalLightBundle, MaterialMeshBundle,
     },
     prelude::{Camera3dBundle, Commands, KeyCode, Query, Res, ResMut, Resource},
     render::{mesh::Mesh, texture::Image},
@@ -17,6 +17,8 @@ use bevy::{
     utils::default,
     DefaultPlugins,
 };
+use celestial_shaders::{CelestialShadersPlugin, SkyboxMaterial};
+use geometry::spherical_cuboid;
 // use celestial_shaders::{
 //     AtmosphereMaterial, CelestialShadersPlugin,
 //     // PlanetMaterial,
@@ -38,7 +40,7 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            // CelestialShadersPlugin,
+            CelestialShadersPlugin,
             // ShaderUtilsPlugin,
             PanOrbitCameraPlugin,
             PcgPlanetPlugin,
@@ -54,7 +56,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     // mut planet_mats: ResMut<Assets<ExtendedMaterial<StandardMaterial, PlanetMaterial>>>,
     // mut atmo_mats: ResMut<Assets<ExtendedMaterial<StandardMaterial, AtmosphereMaterial>>>,
-    // mut skybox_mats: ResMut<Assets<SkyboxMaterial>>,
+    mut skybox_mats: ResMut<Assets<SkyboxMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
     let mut rng = rand::thread_rng();
@@ -99,17 +101,17 @@ fn setup(
     //     ..default()
     // });
 
-    // // Skybox
-    // commands.spawn((
-    //     MaterialMeshBundle {
-    //         mesh: meshes.add(spherical_cuboid(35000.0, 32, true, true)),
-    //         material: skybox_mats.add(SkyboxMaterial {
-    //             seed: rng.gen::<u32>(),
-    //         }),
-    //         ..default()
-    //     },
-    //     // Wireframe
-    // ));
+    // Skybox
+    commands.spawn((
+        MaterialMeshBundle {
+            mesh: meshes.add(spherical_cuboid(35000.0, 32, true, true)),
+            material: skybox_mats.add(SkyboxMaterial {
+                seed: rng.gen::<u32>(),
+            }),
+            ..default()
+        },
+        Wireframe,
+    ));
 
     // let skybox_texture = skybox::generate_skybox(256, 256);
     // let texture_handle = asset_server.add(skybox_texture);

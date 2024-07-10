@@ -1,23 +1,22 @@
 use bevy::{
-    app::{App, Plugin, Startup, Update},
+    app::{App, Plugin},
     asset::Assets,
+    color::Color,
     math::{Rect, Vec2, Vec3},
     pbr::{
         wireframe::{Wireframe, WireframeConfig, WireframePlugin},
         PbrBundle, StandardMaterial,
     },
-    prelude::{Commands, Component, Cuboid, Direction3d, Plane3d, Query, ResMut, Sphere},
+    prelude::{Commands, Component, Query, ResMut},
     render::{
         camera::Camera,
-        color::Color,
-        mesh::{shape, Indices, Mesh, Meshable, PrimitiveTopology},
+        mesh::{Indices, Mesh, MeshBuilder, PrimitiveTopology},
         render_asset::RenderAssetUsages,
     },
     transform::{
+        bundles::TransformBundle,
         components::{GlobalTransform, Transform},
-        TransformBundle,
     },
-    ui::node_bundles,
 };
 
 pub(crate) struct PcgPlanetPlugin;
@@ -65,8 +64,8 @@ fn spawn_planet(
         commands.spawn((n.clone(), n.transform.clone()));
         commands.spawn((
             PbrBundle {
-                mesh: meshes.add(n.mesh()),
-                material: materials.add(Color::rgba(0.0, 0.0, 0.0, 0.0)),
+                mesh: meshes.add(n.build()),
+                material: materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0)),
                 transform: n.transform.clone(),
                 ..Default::default()
             },
@@ -77,8 +76,8 @@ fn spawn_planet(
 
     commands.spawn((
         PbrBundle {
-            mesh: meshes.add(quad.mesh()),
-            material: materials.add(Color::rgba(0.0, 0.0, 0.0, 0.0)),
+            mesh: meshes.add(quad.build()),
+            material: materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0)),
             transform: quad.transform.clone(),
             ..Default::default()
         },
@@ -135,10 +134,8 @@ struct Quad {
     pub transform: Transform,
 }
 
-impl Meshable for Quad {
-    type Output = Mesh;
-
-    fn mesh(&self) -> Mesh {
+impl MeshBuilder for Quad {
+    fn build(&self) -> Mesh {
         let mut positions = Vec::new();
         let mut normals = Vec::new();
         let mut uvs = Vec::new(); // Optional: For texture mapping

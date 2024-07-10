@@ -1,16 +1,27 @@
 use std::f32::consts::PI;
 
 use bevy::{
-    asset::LoadState,
-    core_pipeline::Skybox,
-    pbr::{wireframe::Wireframe, CascadeShadowConfigBuilder, ExtendedMaterial},
-    prelude::*,
-    render::render_resource::{Extent3d, TextureViewDescriptor, TextureViewDimension},
+    app::{App, Startup, Update},
+    asset::{AssetServer, Assets, Handle},
+    color::Color,
+    input::ButtonInput,
+    math::{Quat, Vec3},
+    pbr::{
+        light_consts, AmbientLight, CascadeShadowConfigBuilder, DirectionalLight,
+        DirectionalLightBundle,
+    },
+    prelude::{Camera3dBundle, Commands, KeyCode, Query, Res, ResMut, Resource},
+    render::{mesh::Mesh, texture::Image},
+    time::Time,
+    transform::components::Transform,
+    utils::default,
+    DefaultPlugins,
 };
-use celestial_shaders::{
-    AtmosphereMaterial, CelestialShadersPlugin, PlanetMaterial, SkyboxMaterial,
-};
-use geometry::spherical_cuboid;
+// use celestial_shaders::{
+//     AtmosphereMaterial, CelestialShadersPlugin,
+//     // PlanetMaterial,
+//     SkyboxMaterial,
+// };
 use pcg_planet::PcgPlanetPlugin;
 use rand::Rng;
 
@@ -21,18 +32,16 @@ mod pcg_planet;
 mod skybox;
 
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-use bevy_shader_utils::ShaderUtilsPlugin;
+// use bevy_shader_utils::ShaderUtilsPlugin;
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            (
-                CelestialShadersPlugin,
-                ShaderUtilsPlugin,
-                PanOrbitCameraPlugin,
-                PcgPlanetPlugin,
-            ),
+            // CelestialShadersPlugin,
+            // ShaderUtilsPlugin,
+            PanOrbitCameraPlugin,
+            PcgPlanetPlugin,
         ))
         .add_systems(Startup, setup)
         .add_systems(Update, (orbit_sun, create_new_seed))
@@ -43,30 +52,30 @@ fn main() {
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut planet_mats: ResMut<Assets<ExtendedMaterial<StandardMaterial, PlanetMaterial>>>,
-    mut atmo_mats: ResMut<Assets<ExtendedMaterial<StandardMaterial, AtmosphereMaterial>>>,
-    mut skybox_mats: ResMut<Assets<SkyboxMaterial>>,
+    // mut planet_mats: ResMut<Assets<ExtendedMaterial<StandardMaterial, PlanetMaterial>>>,
+    // mut atmo_mats: ResMut<Assets<ExtendedMaterial<StandardMaterial, AtmosphereMaterial>>>,
+    // mut skybox_mats: ResMut<Assets<SkyboxMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
     let mut rng = rand::thread_rng();
     const RADIUS: f32 = 180.0;
 
-    // Create planet
-    commands.spawn(MaterialMeshBundle {
-        mesh: meshes.add(spherical_cuboid(RADIUS, 16, false, true)),
-        transform: Transform::from_xyz(0.0, 0.0, 0.0),
-        material: planet_mats.add(ExtendedMaterial {
-            base: StandardMaterial {
-                base_color: Color::rgb(0.0, 0.0, 1.0),
-                ..Default::default()
-            },
-            extension: PlanetMaterial {
-                // planet_radius: 180.0,
-                planet_seed: rng.gen(),
-            },
-        }),
-        ..default()
-    });
+    // // Create planet
+    // commands.spawn(MaterialMeshBundle {
+    //     mesh: meshes.add(spherical_cuboid(RADIUS, 16, false, true)),
+    //     transform: Transform::from_xyz(0.0, 0.0, 0.0),
+    //     material: planet_mats.add(ExtendedMaterial {
+    //         base: StandardMaterial {
+    //             base_color: Color::srgb(0.0, 0.0, 1.0),
+    //             ..Default::default()
+    //         },
+    //         extension: PlanetMaterial {
+    //             // planet_radius: 180.0,
+    //             planet_seed: rng.gen(),
+    //         },
+    //     }),
+    //     ..default()
+    // });
     // // Create atmosphere
     // commands.spawn(MaterialMeshBundle {
     //     mesh: meshes.add(Sphere {
@@ -90,17 +99,17 @@ fn setup(
     //     ..default()
     // });
 
-    // Skybox
-    commands.spawn((
-        MaterialMeshBundle {
-            mesh: meshes.add(spherical_cuboid(35000.0, 32, true, true)),
-            material: skybox_mats.add(SkyboxMaterial {
-                seed: rng.gen::<u32>(),
-            }),
-            ..default()
-        },
-        // Wireframe
-    ));
+    // // Skybox
+    // commands.spawn((
+    //     MaterialMeshBundle {
+    //         mesh: meshes.add(spherical_cuboid(35000.0, 32, true, true)),
+    //         material: skybox_mats.add(SkyboxMaterial {
+    //             seed: rng.gen::<u32>(),
+    //         }),
+    //         ..default()
+    //     },
+    //     // Wireframe
+    // ));
 
     // let skybox_texture = skybox::generate_skybox(256, 256);
     // let texture_handle = asset_server.add(skybox_texture);
@@ -163,14 +172,14 @@ fn orbit_sun(time: Res<Time>, mut sun_query: Query<(&mut Transform, &Directional
 
 fn create_new_seed(
     keys: Res<ButtonInput<KeyCode>>,
-    mut materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, PlanetMaterial>>>,
+    // mut materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, PlanetMaterial>>>,
 ) {
     // When the user presses space, we want to create a new seed
     if keys.just_pressed(KeyCode::Space) {
-        let seed = rand::thread_rng().gen();
-        materials.iter_mut().for_each(|(_handle, material)| {
-            material.extension.planet_seed = seed;
-        });
+        let seed: u32 = rand::thread_rng().gen();
+        // materials.iter_mut().for_each(|(_handle, material)| {
+        //     material.extension.planet_seed = seed;
+        // });
         println!("New Seed: {}", seed);
     }
     // query the planet material, then set a new seed

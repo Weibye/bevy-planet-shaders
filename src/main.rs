@@ -3,11 +3,17 @@ use std::f32::consts::PI;
 use bevy::{
     app::{App, Startup, Update},
     asset::{AssetServer, Assets, Handle},
-    color::Color,
+    color::{
+        palettes::tailwind::{ORANGE_300, YELLOW_500, ZINC_300},
+        Color,
+    },
     input::ButtonInput,
     math::{Quat, Vec3},
     pbr::{
-        light_consts, wireframe::Wireframe, AmbientLight, CascadeShadowConfigBuilder, DirectionalLight, DirectionalLightBundle, ExtendedMaterial, MaterialMeshBundle, StandardMaterial
+        light_consts,
+        wireframe::{Wireframe, WireframeColor},
+        AmbientLight, CascadeShadowConfigBuilder, DirectionalLight, DirectionalLightBundle,
+        ExtendedMaterial, MaterialMeshBundle, PbrBundle, StandardMaterial,
     },
     prelude::{Camera3dBundle, Commands, KeyCode, Query, Res, ResMut, Resource},
     render::{mesh::Mesh, texture::Image},
@@ -16,19 +22,19 @@ use bevy::{
     utils::default,
     DefaultPlugins,
 };
-use celestial_shaders::{AtmosphereMaterial, CelestialShadersPlugin, PlanetMaterial, SkyboxMaterial};
+use celestial_shaders::{
+    AtmosphereMaterial, CelestialShadersPlugin, PlanetMaterial, SkyboxMaterial,
+};
 use geometry::spherical_cuboid;
-// use celestial_shaders::{
-//     AtmosphereMaterial, CelestialShadersPlugin,
-//     // PlanetMaterial,
-//     SkyboxMaterial,
-// };
+use orbits::{OrbitalBody, OrbitalNode, OrbitalPlugin};
+
 use pcg_planet::PcgPlanetPlugin;
 use rand::Rng;
 
 mod celestial_data;
 mod celestial_shaders;
 mod geometry;
+mod orbits;
 mod pcg_planet;
 mod skybox;
 
@@ -43,6 +49,7 @@ fn main() {
             ShaderUtilsPlugin,
             PanOrbitCameraPlugin,
             PcgPlanetPlugin,
+            OrbitalPlugin,
         ))
         .add_systems(Startup, setup)
         .add_systems(Update, (orbit_sun, create_new_seed))
@@ -53,30 +60,77 @@ fn main() {
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     mut planet_mats: ResMut<Assets<ExtendedMaterial<StandardMaterial, PlanetMaterial>>>,
     mut atmo_mats: ResMut<Assets<ExtendedMaterial<StandardMaterial, AtmosphereMaterial>>>,
     mut skybox_mats: ResMut<Assets<SkyboxMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
     let mut rng = rand::thread_rng();
-    const RADIUS: f32 = 180.0;
+
+    const SUN_RADIUS: f32 = 500.0;
+    const PLANET_RADIUS: f32 = 150.0;
+    const MOON_RADIUS: f32 = 50.0;
+
+    const PLANET_ORBIT_RADIUS: f32 = 1800.0;
+    const MOON_ORBIT_RADIUS: f32 = 300.0;
+
+    // Sun
+    let sun_entity = commands
+        .spawn((
+            PbrBundle {
+                mesh: meshes.add(spherical_cuboid(SUN_RADIUS, 16, false, true)),
+                material: materials.add(StandardMaterial {
+                    base_color: ORANGE_300.into(),
+                    ..Default::default()
+                }),
+                transform: Transform::from_xyz(0.0, 0.0, 0.0),
+                ..default()
+            },
+            OrbitalNode::Root,
+            OrbitalBody {
+                mass: 10_000.0,
+                radius: SUN_RADIUS,
+                angular_momentum: 10_000_000.0,
+            },
+            Wireframe,
+            WireframeColor {
+                color: YELLOW_500.into(),
+            },
+        ))
+        .id();
 
     // Create planet
-    commands.spawn(MaterialMeshBundle {
-        mesh: meshes.add(spherical_cuboid(RADIUS, 16, false, true)),
-        transform: Transform::from_xyz(0.0, 0.0, 0.0),
-        material: planet_mats.add(ExtendedMaterial {
-            base: StandardMaterial {
-                base_color: Color::srgb(0.0, 0.0, 1.0),
-                ..Default::default()
+    let planet_entity = commands
+        .spawn((
+            MaterialMeshBundle {
+                mesh: meshes.add(spherical_cuboid(PLANET_RADIUS, 16, false, true)),
+                transform: Transform::from_xyz(PLANET_ORBIT_RADIUS, 0.0, 0.0),
+                material: planet_mats.add(ExtendedMaterial {
+                    base: StandardMaterial {
+                        base_color: Color::srgb(0.0, 0.0, 1.0),
+                        ..Default::default()
+                    },
+                    extension: PlanetMaterial {
+                        // planet_radius: 180.0,
+                        planet_seed: rng.gen(),
+                    },
+                }),
+                ..default()
             },
-            extension: PlanetMaterial {
-                // planet_radius: 180.0,
-                planet_seed: rng.gen(),
+            OrbitalBody {
+                mass: 10.0,
+                radius: PLANET_RADIUS,
+                angular_momentum: 1_000.0,
             },
-        }),
-        ..default()
-    });
+            OrbitalNode::Intermediate {
+                radius: PLANET_ORBIT_RADIUS,
+                parent_node: sun_entity,
+                orbital_period: 50.0,
+            },
+            Wireframe,
+        ))
+        .id();
     // // Create atmosphere
     // commands.spawn(MaterialMeshBundle {
     //     mesh: meshes.add(Sphere {
@@ -100,6 +154,35 @@ fn setup(
     //     ..default()
     // });
 
+    // Moon
+    let moon_entity = commands
+        .spawn((
+            PbrBundle {
+                mesh: meshes.add(spherical_cuboid(MOON_RADIUS, 16, false, true)),
+                material: materials.add(StandardMaterial {
+                    base_color: ZINC_300.into(),
+                    ..Default::default()
+                }),
+                transform: Transform::from_xyz(PLANET_ORBIT_RADIUS + MOON_ORBIT_RADIUS, 0.0, 0.0),
+                ..default()
+            },
+            OrbitalNode::Intermediate {
+                radius: MOON_ORBIT_RADIUS,
+                parent_node: planet_entity,
+                orbital_period: 10.0,
+            },
+            OrbitalBody {
+                mass: 1.0,
+                radius: MOON_RADIUS,
+                angular_momentum: 10.0,
+            },
+            Wireframe,
+            WireframeColor {
+                color: ZINC_300.into(),
+            },
+        ))
+        .id();
+
     // Skybox
     commands.spawn((
         MaterialMeshBundle {
@@ -115,10 +198,12 @@ fn setup(
     // let skybox_texture = skybox::generate_skybox(256, 256);
     // let texture_handle = asset_server.add(skybox_texture);
 
+    let camera_spawn = Vec3::new(0.5, 0.5, 0.5) * 5500.0;
+
     // camera
     commands.spawn((
         Camera3dBundle {
-            transform: Transform::from_xyz(0.0, 0.0, 500.0).looking_at(Vec3::ZERO, Vec3::Y),
+            transform: Transform::from_translation(camera_spawn).looking_at(Vec3::ZERO, Vec3::Y),
             ..default()
         },
         PanOrbitCamera::default(),
@@ -149,12 +234,12 @@ fn setup(
         // The default cascade config is designed to handle large scenes.
         // As this example has a much smaller world, we can tighten the shadow
         // bounds for better visual quality.
-        cascade_shadow_config: CascadeShadowConfigBuilder {
-            first_cascade_far_bound: 4.0,
-            maximum_distance: 10.0,
-            ..default()
-        }
-        .into(),
+        // cascade_shadow_config: CascadeShadowConfigBuilder {
+        //     first_cascade_far_bound: 4.0,
+        //     maximum_distance: 10.0,
+        //     ..default()
+        // }
+        // .into(),
         ..default()
     });
 }
